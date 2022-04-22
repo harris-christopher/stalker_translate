@@ -69,13 +69,13 @@ class Unpacker:
 
         _, line_to_parse = next(line_iter)
         while not RX_MULTILINE_END.search(line_to_parse):
-            text = text + " " + line_to_parse
+            text = text + line_to_parse.replace("\n", "|")
             _, line_to_parse = next(line_iter)
 
         match_end = RX_MULTILINE_END.search(line_to_parse)
         text = text + match_end.groups()[0] if match_end.groups() else text
 
-        return text
+        return text + "\n"
 
     def write_to_file(self, file_contents_unpacked: List[str]):
         output_filename = f"{self.output_directory}/{self.filename_suffix}-unpacked.txt"
