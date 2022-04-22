@@ -1,18 +1,15 @@
 import logging
-import re
 from typing import List
 
+from packager import rx
+from packager.constants import (
+    DELIMITER_MULTILINE_GENERAL,
+    DELIMITER_MULTILINE_END,
+    DELIMITER_MULTILINE_START,
+    DELIMITER_NEWLINE,
+)
 
 LOGGER = logging.getLogger(__name__)
-
-RX_SIMPLE = re.compile("<text>(.*)</text>")
-RX_MULTILINE_START = re.compile("<text>(.*)")
-RX_MULTILINE_END = re.compile("(.*)</text>")
-CHARACTER_LIMIT = 5000
-DELIMITER_NEWLINE = ";NEW_LINE;"
-DELIMITER_MULTILINE_GENERAL = ":ML:"
-DELIMITER_MULTILINE_START = ":MLS:"
-DELIMITER_MULTILINE_END = ":MLE:"
 
 
 class Unpacker:
@@ -36,8 +33,8 @@ class Unpacker:
 
             line_iter = enumerate(iter(file_contents), start=1)
             for idx, line in line_iter:
-                match_simple = RX_SIMPLE.search(line)
-                match_multiline = RX_MULTILINE_START.search(line)
+                match_simple = rx.XML_SIMPLE.search(line)
+                match_multiline = rx.XML_MULTILINE_START.search(line)
 
                 if match_simple:
                     LOGGER.info(f"|{self.filename_suffix}| [{idx}] Match - Simple")
@@ -84,14 +81,14 @@ class Unpacker:
 
         # Handle Body (Middle Line(s))
         idx, line_to_parse = next(line_iter)
-        while not RX_MULTILINE_END.search(line_to_parse):
+        while not rx.XML_MULTILINE_END.search(line_to_parse):
             prefix_middle = f"[{idx}]{DELIMITER_MULTILINE_GENERAL} "
             line_to_parse_prepended = prefix_middle + line_to_parse
             text = text + line_to_parse_prepended
             idx, line_to_parse = next(line_iter)
 
         # Handle Ending Line
-        match_end = RX_MULTILINE_END.search(line_to_parse).groups()[0]
+        match_end = rx.XML_MULTILINE_END.search(line_to_parse).groups()[0]
         if match_end:
             prefix_end = f"[{idx}]{DELIMITER_MULTILINE_END} "
             line_to_parse_prepended = prefix_end + match_end
@@ -107,7 +104,7 @@ class Unpacker:
         return text
 
     def write_to_file(self, file_contents_unpacked: List[str]):
-        output_filename = f"{self.output_directory}/{self.filename_suffix}-unpacked.txt"
+        output_filename = f"{self.output_directory}/{self.filename_suffix}_unpacked.txt"
         if self.is_character_limit:
             output_filename = output_filename.replace(".txt", f"-{self.output_file_partition}.txt")
         LOGGER.info(f"File: {self.filename} - Writing: {output_filename} - Characters: {self.characters_written}...")

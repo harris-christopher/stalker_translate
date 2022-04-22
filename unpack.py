@@ -27,14 +27,25 @@ def dir_path(path):
 
 def run():
     parser = argparse.ArgumentParser(description="Unpack Russian XML File(s) Into Text w/ Index")
-    parser.add_argument("-in", help="Input XML File(s)", dest="input", type=type_xml, required=True)
-    parser.add_argument("-out", help="Output directory", dest="output", type=dir_path, required=True)
     parser.add_argument(
-        "-partition",
+        "-in",
+        help="Russian XML File(s)",
+        dest="input",
+        type=type_xml,
+        required=True,
+    )
+    parser.add_argument(
+        "-out",
+        help="Output Directory for Reconstructed Russian Text File(s)",
+        dest="output",
+        type=dir_path,
+        default="output-unpack"
+    )
+    parser.add_argument(
+        "-part",
         help="Partition Files by Character Limit",
         dest="partition",
         type=bool,
-        required=False,
         default=False,
     )
 
