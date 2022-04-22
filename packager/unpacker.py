@@ -9,6 +9,7 @@ RX_SIMPLE = re.compile("<text>(.*)</text>")
 RX_MULTILINE_START = re.compile("<text>(.*)")
 RX_MULTILINE_END = re.compile("(.*)</text>")
 CHARACTER_LIMIT = 5000
+NEWLINE_DELIMITER = "|"
 
 
 class Unpacker:
@@ -69,7 +70,7 @@ class Unpacker:
 
         _, line_to_parse = next(line_iter)
         while not RX_MULTILINE_END.search(line_to_parse):
-            text = text + line_to_parse.replace("\n", "|")
+            text = text + line_to_parse.replace("\n", NEWLINE_DELIMITER)
             _, line_to_parse = next(line_iter)
 
         match_end = RX_MULTILINE_END.search(line_to_parse)
