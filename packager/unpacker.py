@@ -34,7 +34,7 @@ class Unpacker:
             LOGGER.info(f"|{self.filename_suffix}| Loading into memory...")
             file_contents = input_fp.readlines()
 
-            line_iter = enumerate(iter(file_contents))
+            line_iter = enumerate(iter(file_contents), start=1)
             for idx, line in line_iter:
                 match_simple = RX_SIMPLE.search(line)
                 match_multiline = RX_MULTILINE_START.search(line)
