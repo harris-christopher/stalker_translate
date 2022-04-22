@@ -9,8 +9,10 @@ RX_SIMPLE = re.compile("<text>(.*)</text>")
 RX_MULTILINE_START = re.compile("<text>(.*)")
 RX_MULTILINE_END = re.compile("(.*)</text>")
 CHARACTER_LIMIT = 5000
-NEWLINE_EDITOR_DELIMITER = "<NL_ED>"
-NEWLINE_TEXT_DELIMITER = "<NL_TXT>"
+DELIMITER_NEWLINE = "<NEW_LINE>"
+DELIMITER_MULTILINE_GENERAL = ":ML:"
+DELIMITER_MULTILINE_START = ":MLS:"
+DELIMITER_MULTILINE_END = ":MLE:"
 
 
 class Unpacker:
@@ -33,21 +35,21 @@ class Unpacker:
             file_contents = input_fp.readlines()
 
             line_iter = enumerate(iter(file_contents))
-            for line_no, line in line_iter:
+            for idx, line in line_iter:
                 match_simple = RX_SIMPLE.search(line)
                 match_multiline = RX_MULTILINE_START.search(line)
 
                 if match_simple:
-                    LOGGER.info(f"|{self.filename_suffix}| [{line_no}] Match - Simple")
-                    text = self.process_simple_match(match_simple)
+                    LOGGER.info(f"|{self.filename_suffix}| [{idx}] Match - Simple")
+                    text = self.process_simple_match(match_simple, idx)
                 elif match_multiline:
-                    LOGGER.info(f"|{self.filename_suffix}| [{line_no}] Match - Multiline")
-                    text = self.process_multiline_match(match_multiline, line_iter)
+                    LOGGER.info(f"|{self.filename_suffix}| [{idx}] Match - Multiline")
+                    text = self.process_multiline_match(match_multiline, idx, line_iter)
                 else:
-                    LOGGER.info(f"|{self.filename_suffix}| [{line_no}] Match - None")
+                    LOGGER.info(f"|{self.filename_suffix}| [{idx}] Match - None")
                     continue
 
-                text = text.replace("\\n", NEWLINE_TEXT_DELIMITER)
+                text = self.post_process(text, idx)
 
                 if self.is_character_limit:
                     # Write existing data to file if text will overflow character limit
@@ -64,22 +66,48 @@ class Unpacker:
                 self.write_to_file(text_unpacked)
 
     @staticmethod
-    def process_simple_match(match) -> str:
-        return match.groups()[0] + "\n"
+    def process_simple_match(match, idx: int) -> str:
+        processed_text = match.groups()[0] + "\n"
+        processed_text_prepended = f"|{idx}|" + processed_text
+        return processed_text_prepended
 
     @staticmethod
-    def process_multiline_match(match, line_iter) -> str:
-        text = match.groups()[0] if match.groups() else ""
+    def process_multiline_match(match, idx: int, line_iter) -> str:
+        # Handle Starting Line
+        match_start = match.groups()[0]
+        if match_start:
+            prefix_start = f"|{idx}|{DELIMITER_MULTILINE_START}"
+            line_to_parse_prepended = prefix_start + match.groups()[0]
+            text = line_to_parse_prepended + "\n"
+        else:
+            text = ""
 
-        _, line_to_parse = next(line_iter)
+        # Handle Body (Middle Line(s))
+        idx, line_to_parse = next(line_iter)
         while not RX_MULTILINE_END.search(line_to_parse):
-            text = text + line_to_parse.replace("\n", NEWLINE_EDITOR_DELIMITER)
-            _, line_to_parse = next(line_iter)
+            prefix_middle = f"|{idx}|{DELIMITER_MULTILINE_GENERAL}"
+            line_to_parse_prepended = prefix_middle + line_to_parse
+            text = text + line_to_parse_prepended
+            idx, line_to_parse = next(line_iter)
 
-        match_end = RX_MULTILINE_END.search(line_to_parse)
-        text = text + match_end.groups()[0] if match_end.groups() else text
+        # Handle Ending Line
+        # match_end = RX_MULTILINE_END.search(line_to_parse)
+        # if match_end.groups():
+        match_end = RX_MULTILINE_END.search(line_to_parse).groups()[0]
+        if match_end:
+            prefix_end = f"|{idx}|{DELIMITER_MULTILINE_END}"
+            # line_to_parse_prepended = prefix_end + match_end.groups()[0]
+            line_to_parse_prepended = prefix_end + match_end
+            text = text + line_to_parse_prepended + "\n"
 
-        return text + "\n"
+        return text
+
+    @staticmethod
+    def post_process(text: str, idx: int) -> str:
+        # Replace text embedded \n with delimiter to avoid munging by translator
+        text = text.replace("\\n", DELIMITER_NEWLINE)
+
+        return text
 
     def write_to_file(self, file_contents_unpacked: List[str]):
         output_filename = f"{self.output_directory}/{self.filename_suffix}-unpacked.txt"
