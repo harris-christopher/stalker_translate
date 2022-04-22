@@ -9,7 +9,7 @@ RX_SIMPLE = re.compile("<text>(.*)</text>")
 RX_MULTILINE_START = re.compile("<text>(.*)")
 RX_MULTILINE_END = re.compile("(.*)</text>")
 CHARACTER_LIMIT = 5000
-DELIMITER_NEWLINE = "<NEW_LINE>"
+DELIMITER_NEWLINE = ";NEW_LINE;"
 DELIMITER_MULTILINE_GENERAL = ":ML:"
 DELIMITER_MULTILINE_START = ":MLS:"
 DELIMITER_MULTILINE_END = ":MLE:"
@@ -68,7 +68,7 @@ class Unpacker:
     @staticmethod
     def process_simple_match(match, idx: int) -> str:
         processed_text = match.groups()[0] + "\n"
-        processed_text_prepended = f"|{idx}|" + processed_text
+        processed_text_prepended = f"[{idx}] " + processed_text
         return processed_text_prepended
 
     @staticmethod
@@ -76,7 +76,7 @@ class Unpacker:
         # Handle Starting Line
         match_start = match.groups()[0]
         if match_start:
-            prefix_start = f"|{idx}|{DELIMITER_MULTILINE_START}"
+            prefix_start = f"[{idx}]{DELIMITER_MULTILINE_START} "
             line_to_parse_prepended = prefix_start + match.groups()[0]
             text = line_to_parse_prepended + "\n"
         else:
@@ -85,18 +85,15 @@ class Unpacker:
         # Handle Body (Middle Line(s))
         idx, line_to_parse = next(line_iter)
         while not RX_MULTILINE_END.search(line_to_parse):
-            prefix_middle = f"|{idx}|{DELIMITER_MULTILINE_GENERAL}"
+            prefix_middle = f"[{idx}]{DELIMITER_MULTILINE_GENERAL} "
             line_to_parse_prepended = prefix_middle + line_to_parse
             text = text + line_to_parse_prepended
             idx, line_to_parse = next(line_iter)
 
         # Handle Ending Line
-        # match_end = RX_MULTILINE_END.search(line_to_parse)
-        # if match_end.groups():
         match_end = RX_MULTILINE_END.search(line_to_parse).groups()[0]
         if match_end:
-            prefix_end = f"|{idx}|{DELIMITER_MULTILINE_END}"
-            # line_to_parse_prepended = prefix_end + match_end.groups()[0]
+            prefix_end = f"[{idx}]{DELIMITER_MULTILINE_END} "
             line_to_parse_prepended = prefix_end + match_end
             text = text + line_to_parse_prepended + "\n"
 
@@ -105,7 +102,7 @@ class Unpacker:
     @staticmethod
     def post_process(text: str, idx: int) -> str:
         # Replace text embedded \n with delimiter to avoid munging by translator
-        text = text.replace("\\n", DELIMITER_NEWLINE)
+        text = text.replace("\\n", DELIMITER_NEWLINE + " ")
 
         return text
 
