@@ -9,7 +9,8 @@ RX_SIMPLE = re.compile("<text>(.*)</text>")
 RX_MULTILINE_START = re.compile("<text>(.*)")
 RX_MULTILINE_END = re.compile("(.*)</text>")
 CHARACTER_LIMIT = 5000
-NEWLINE_DELIMITER = "|"
+NEWLINE_EDITOR_DELIMITER = "<NL_ED>"
+NEWLINE_TEXT_DELIMITER = "<NL_TXT>"
 
 
 class Unpacker:
@@ -46,6 +47,8 @@ class Unpacker:
                     LOGGER.info(f"|{self.filename_suffix}| [{line_no}] Match - None")
                     continue
 
+                text = text.replace("\\n", NEWLINE_TEXT_DELIMITER)
+
                 if self.is_character_limit:
                     # Write existing data to file if text will overflow character limit
                     if self.characters_written + len(text) >= CHARACTER_LIMIT:
@@ -70,7 +73,7 @@ class Unpacker:
 
         _, line_to_parse = next(line_iter)
         while not RX_MULTILINE_END.search(line_to_parse):
-            text = text + line_to_parse.replace("\n", NEWLINE_DELIMITER)
+            text = text + line_to_parse.replace("\n", NEWLINE_EDITOR_DELIMITER)
             _, line_to_parse = next(line_iter)
 
         match_end = RX_MULTILINE_END.search(line_to_parse)
