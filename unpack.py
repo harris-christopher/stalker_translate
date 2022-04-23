@@ -35,11 +35,18 @@ def run():
         required=True,
     )
     parser.add_argument(
-        "-out",
+        "-outdir",
         help="Output Directory for Reconstructed Russian Text File(s)",
-        dest="output",
+        dest="output_unpack",
         type=dir_path,
-        default="output-unpack"
+        default="output_unpack"
+    )
+    parser.add_argument(
+        "-indir",
+        help="Output Directory for Empty File with Proper Name for Repacker Ingestion",
+        dest="input_repack",
+        type=dir_path,
+        default="input_repack"
     )
     parser.add_argument(
         "-part",
@@ -52,7 +59,7 @@ def run():
     args = parser.parse_args()
 
     for filename in glob(args.input):
-        unpacker = Unpacker(filename, args.output, args.partition)
+        unpacker = Unpacker(filename, args.output_unpack, args.input_repack, args.partition)
         unpacker.unpack()
 
 

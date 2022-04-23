@@ -14,10 +14,11 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Unpacker:
-    def __init__(self, filename, output_directory, is_character_limit: bool = False):
+    def __init__(self, filename, dir_output_unpack, dir_input_repack, is_character_limit: bool = False):
         self.filename = filename
         self.filename_suffix = self.filename.split("\\")[-1]
-        self.output_directory = output_directory
+        self.dir_output_unpack = dir_output_unpack
+        self.dir_input_repack = dir_input_repack
 
         # Character Limit Settings
         self.is_character_limit = is_character_limit
@@ -105,7 +106,9 @@ class Unpacker:
         return text
 
     def write_to_file(self, file_contents_unpacked: List[str]):
-        output_filename = f"{self.output_directory}/{self.filename_suffix}_unpacked.txt"
+        filename_no_ext = self.filename_suffix.split(".")[0]
+        # Write File Contents to Unpacker Output Directory
+        output_filename = f"{self.dir_output_unpack}/{filename_no_ext}_unpacked.txt"
         if self.is_character_limit:
             output_filename = output_filename.replace(".txt", f"-{self.output_file_partition}.txt")
         LOGGER.info(f"File: {self.filename} - Writing: {output_filename} - Characters: {self.characters_written}...")
@@ -115,3 +118,11 @@ class Unpacker:
 
         self.output_file_partition = self.output_file_partition + 1
         self.characters_written = 0
+
+        # Create Empty File w/ Proper Naming Scheme in Repacker Input Directory
+        output_repack_filename = f"{self.dir_input_repack}/{filename_no_ext}_translate.txt"
+        if self.is_character_limit:
+            output_repack_filename = output_repack_filename.replace(".txt", f"-{self.output_file_partition}.txt")
+
+        with open(output_repack_filename, "w"):
+            pass
