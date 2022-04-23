@@ -3,6 +3,7 @@ from typing import List
 
 from packager import rx
 from packager.constants import (
+    CHARACTER_LIMIT,
     DELIMITER_MULTILINE_GENERAL,
     DELIMITER_MULTILINE_END,
     DELIMITER_MULTILINE_START,
@@ -46,7 +47,7 @@ class Unpacker:
                     LOGGER.info(f"|{self.filename_suffix}| [{idx}] Match - None")
                     continue
 
-                text = self.post_process(text, idx)
+                text = self.post_process(text)
 
                 if self.is_character_limit:
                     # Write existing data to file if text will overflow character limit
@@ -97,7 +98,7 @@ class Unpacker:
         return text
 
     @staticmethod
-    def post_process(text: str, idx: int) -> str:
+    def post_process(text: str) -> str:
         # Replace text embedded \n with delimiter to avoid munging by translator
         text = text.replace("\\n", DELIMITER_NEWLINE + " ")
 
