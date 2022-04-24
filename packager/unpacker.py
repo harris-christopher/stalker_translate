@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import List
 
 from packager import rx
@@ -16,6 +17,7 @@ LOGGER = logging.getLogger(__name__)
 class Unpacker:
     def __init__(self, filename, dir_output_unpack, dir_input_repack, is_character_limit: bool = False):
         self.filename = filename
+        # TODO: Change to os.sep
         self.filename_suffix = self.filename.split("\\")[-1]
         self.dir_output_unpack = dir_output_unpack
         self.dir_input_repack = dir_input_repack
